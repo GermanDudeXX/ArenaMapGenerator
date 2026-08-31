@@ -94,7 +94,22 @@ class Menu:
     def eigene_masse(self):
         b = self.breite.as_int() or mapgen.MAP_W
         h = self.hoehe.as_int() or mapgen.MAP_H
+        if self.ist_abschnitt():
+            return (max(8, min(mapgen.MAX_W, b)),
+                    max(8, min(mapgen.MAX_H, h)))
         return mapgen.clamp_masse(b, h)
+
+    @staticmethod
+    def _hinweis(eingabe, ergebnis):
+        """Sagen, wenn die Eingabe zurechtgebogen wurde.
+
+        Vorher stand in der Zeile nur das Ergebnis. Wer 2 x 2 eintippt und
+        7 x 9 lesen muss, haelt das fuer einen Fehler - und hat recht,
+        solange niemand dazuschreibt, dass es eine Untergrenze gibt.
+        """
+        if eingabe == ergebnis:
+            return ""
+        return "  (Eingabe %d x %d angepasst)" % eingabe
 
     @property
     def gruppe(self):
@@ -183,8 +198,10 @@ class Menu:
                       "Abschnitt (ohne Startraum)" if abschnitt
                       else "Vollkarte (mit Startraum)"))
             z.append(("breite", "  Breite", self.breite.text))
-            z.append(("hoehe", "  Hoehe", "%s      -> %d x %d Kacheln"
-                      % (self.hoehe.text, b, h)))
+            roh = (self.breite.as_int() or b, self.hoehe.as_int() or h)
+            z.append(("hoehe", "  Hoehe", "%s      -> %d x %d Kacheln%s"
+                      % (self.hoehe.text, b, h,
+                         self._hinweis(roh, (b, h)))))
         z.append(("gruppe", "Gruppe", self.gruppe))
         z.append(("art", "Art", "%s   [%d moeglich]" % (art, len(self.arten()))))
 
@@ -195,8 +212,11 @@ class Menu:
             if self.safe_name == "eigene":
                 sb, sh = self.safe_size
                 z.append(("sr_breite", "  Breite", self.sr_breite.text))
-                z.append(("sr_hoehe", "  Hoehe", "%s      -> %d x %d Kacheln"
-                          % (self.sr_hoehe.text, sb, sh)))
+                roh = (self.sr_breite.as_int() or sb,
+                       self.sr_hoehe.as_int() or sh)
+                z.append(("sr_hoehe", "  Hoehe", "%s      -> %d x %d Kacheln%s"
+                          % (self.sr_hoehe.text, sb, sh,
+                             self._hinweis(roh, (sb, sh)))))
             z.append(("ecke", "Startraum-Ecke", self.ecke))
 
         z.append(("seed", "Seed", self.seed_text or "(zufaellig)"))

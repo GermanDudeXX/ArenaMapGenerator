@@ -308,7 +308,14 @@ def _base(bp, rng):
         trenn_y = sy0 - 1                 # Querwand oberhalb
         wand_von, wand_bis = sy0 - 1, bp.y1 + 1
 
-    gy0 = rng.randint(sy0 + 3, max(sy0 + 3, sy1 - 4))
+    # Der Rand haelt das Tor von den Ecken fern. Fest auf 3/4 gesetzt
+    # verlangte er einen mindestens acht Zeilen hohen Raum - bei einem
+    # kleinen Startraum ist dieser Abstand aber weder moeglich noch
+    # noetig. Deshalb waechst er mit: hoechstens 3, mindestens 1, und
+    # nie mehr als der Raum hergibt. Ab acht Zeilen ist er wieder 3,
+    # dort aendert sich also nichts.
+    rand = min(3, max(1, (hoch - 2) // 2))
+    gy0 = rng.randint(sy0 + rand, max(sy0 + rand, sy1 - rand - 1))
     gy1 = gy0 + 1
 
     quer = range(bp.x0 - 1, gx + 1) if links else range(gx, bp.x1 + 2)
@@ -1721,9 +1728,12 @@ SAFE_POSITIONS = ("oben links", "oben rechts", "unten links", "unten rechts")
 MIN_W, MIN_H = 48, 36
 MAX_W, MAX_H = 250, 200
 
-# Startraum: die Hoehe hat eine harte Untergrenze, weil das Tor zwischen
-# sy0+3 und sy1-4 sitzt. Darunter bliebe dafuer kein Platz.
-MIN_SAFE_W, MIN_SAFE_H = 7, 9
+# Startraum. Gemessen, nachdem der Torrand mitwaechst: ab 2 x 4 sitzt das
+# Tor sauber zwischen zwei Wandstuecken. Bei Hoehe 3 stiesse es an den
+# Rand des Raums, bei 2 raegte es heraus - das waere kein Raum mit Tuer
+# mehr, sondern eine Luecke. Vorher stand hier 7 x 9, weil der Torrand
+# fest war; das war eine Folge der Umsetzung, keine Notwendigkeit.
+MIN_SAFE_W, MIN_SAFE_H = 2, 4
 
 
 def clamp_masse(w, h):
