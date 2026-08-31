@@ -1,0 +1,10 @@
+config_version=5
+
+[application]
+config/name="ArenaRuntime"
+run/main_scene="res://Main.tscn"
+config/features=PackedStringArray("4.4", "GL Compatibility")
+
+[rendering]
+renderer/rendering_method="mobile"
+textures/canvas_textures/default_texture_filter=0

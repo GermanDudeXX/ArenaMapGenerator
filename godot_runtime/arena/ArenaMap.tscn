@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://arena/ArenaMap.gd" id="1_map"]
+[ext_resource type="TileSet" path="res://arena/ArenaTileset.tres" id="2_ts"]
+
+[node name="ArenaMap" type="Node2D"]
+script = ExtResource("1_map")
+map_seed = 0
+map_mode = ""
+only_group = ""
+tile_set_resource = ExtResource("2_ts")
+collision_layer = 1

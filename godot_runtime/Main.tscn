@@ -1,0 +1,13 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scene_main.gd" id="1_main"]
+[ext_resource type="Script" path="res://arena/ArenaMap.gd" id="2_map"]
+[ext_resource type="TileSet" path="res://arena/ArenaTileset.tres" id="3_ts"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="ArenaMap" type="Node2D" parent="."]
+script = ExtResource("2_map")
+map_seed = 0
+tile_set_resource = ExtResource("3_ts")

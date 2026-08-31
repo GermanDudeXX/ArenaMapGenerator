@@ -1,0 +1,162 @@
+ARENA MAP TOOL
+==============
+
+Eine einzelne Datei. Doppelklick genuegt - kein Python, keine
+Installation, keine Ordner daneben. Die Grafiken stecken in der .exe.
+
+
+ERSTER START
+------------
+Es oeffnet sich ein Fenster mit einer zufaelligen Karte.
+
+Druecke F1 fuer das Auswahlmenue:
+
+    Groesse         Vollkarte 68x46
+                    Abschnitt klein  16x12
+                    Abschnitt mittel 32x24
+                    Abschnitt gross  48x36
+                    eigene Masse (Breite und Hoehe eintippen)
+    Gruppe          alle | Arena | Dungeon | Organisch | Labyrinth
+    Art             (zufaellig) oder eine feste der 26
+    Startraum       zufaellig | klein 11x9 | mittel 15x12 | gross 20x16
+    Startraum-Ecke  oben links | oben rechts | unten links | unten rechts
+    Schriftgroesse  winzig | klein | normal | gross | riesig
+    Farbschema      dunkel | hell | kontrast | gruen | bernstein
+                    (beides nur bei der Vollkarte - Abschnitte haben keinen)
+    Seed            leer = wuerfeln, oder eine Zahl eintippen
+    Export-Ordner   wohin die Dateien gehen
+
+    Hoch/Runter   Zeile waehlen
+    Links/Rechts  Wert aendern
+    Maus          Zeile anklicken
+    ENTER         neue Karte bauen (in der Ordner-Zeile: Ordner waehlen)
+    F1            schliessen
+
+In der Seed-Zeile ist ein richtiges Textfeld:
+
+    Ziffern           tippen, auch mitten hinein
+    Links/Rechts      Schreibmarke bewegen
+    Pos1 / Ende       Anfang / Ende
+    Rueckschritt      Zeichen links loeschen
+    Entf              Zeichen rechts loeschen
+    Strg+V            aus der Zwischenablage einfuegen
+    Strg+A            Feld leeren
+    + / -             Seed eins hoch / runter
+    Mausklick         Schreibmarke dorthin setzen
+
+Leeres Feld heisst: Seed wird gewuerfelt.
+
+
+WO DIE DATEIEN LANDEN
+---------------------
+Voreingestellt ist ein Ordner "ArenaExport" neben der .exe.
+
+Zum Aendern: F1 -> Zeile "Export-Ordner" -> ENTER. Es geht ein normaler
+Windows-Ordnerdialog auf. Die Wahl wird gemerkt und gilt auch beim
+naechsten Start (gespeichert unter %APPDATA%\ArenaMapGen).
+
+Mit E wird geschrieben:
+
+    <Ordner>\karte_gespiegelt_4242.png     Bild der Karte
+    <Ordner>\karte_gespiegelt_4242.json    Gitter, Safezone, Tor, Spawns
+    <Ordner>\tiled\karte_gespiegelt_4242.tmx
+    <Ordner>\tiled\ArenaTileset.tsx        Gelaende, mit Kollision
+    <Ordner>\tiled\ArenaTileset.png
+    <Ordner>\tiled\Objekte.tsx / .png      und elf weitere
+
+Jeder Export bringt das KOMPLETTE CraftPix-Paket mit: Gelaende, Objekte,
+Details, animierte Objekte, drei Charaktere und vier Gegner - zusammen
+13 Tilesets mit ueber 5000 Kacheln. In Tiled hat jedes einen eigenen
+Reiter, du kannst also sofort dekorieren, ohne dir Grafiken
+zusammenzusuchen. Das kostet rund 100 KB je Export.
+
+Die .tmx oeffnest du in Tiled. Tileset und Atlas muessen daneben liegen -
+deshalb der Unterordner "tiled".
+
+
+ALLE TASTEN
+-----------
+    F1             Auswahlmenue
+    1 2 3 4        Gruppe: Arena / Dungeon / Organisch / Labyrinth
+    TAB / S-TAB    naechste / vorige Kartenart, gleicher Seed
+    C              Art wieder wuerfeln
+    R              neue Karte wuerfeln
+    N / P          Seed vor / zurueck
+    L              handgesetztes Layout an/aus
+    E              exportieren
+    M              Gesamtansicht
+    G              Tileraster
+    K              Spawnpunkte
+    T              Tor auf/zu
+    W A S D        Karte bewegen (SHIFT schneller)
+    F11            Vollbild
+    H              Hilfe
+    ESC            Beenden
+
+
+HITBOXEN
+--------
+Die Kollision steckt zweimal in der .tmx, mit Absicht:
+
+1. Im Tileset, pro Mauerkachel. Diese geht mit, wenn du in Tiled
+   Abschnitte zusammensetzt oder Waende nachmalst. Das ist die
+   wichtige Fassung.
+2. Als Objektebene "Kollision" in der Karte. Ein Rechteck je
+   zusammenhaengendem Mauerteil - fuer Engines, die keine
+   Kachelkollision lesen. Achtung: eine Momentaufnahme. Malst du
+   nachtraeglich Waende, wandern diese Rechtecke nicht mit.
+
+Godot liest beides ueber die gaengigen Tiled-Importer.
+
+
+ABSCHNITTE
+----------
+Die drei Groessen gehen ineinander auf: ein grosser Abschnitt ist genau
+neun kleine, ein mittlerer vier. Abschnitte haben keine Aussenmauer -
+der Boden reicht bis an den Rand, damit zwei Teile in Tiled nahtlos
+aneinanderstossen. Safezone, Tor und Spawnpunkte gibt es nur bei der
+Vollkarte.
+
+In "klein" fehlen drei der 26 Arten (rotunde, zellen, festung) - sie
+brauchen mehr Flaeche als 16x12 hergibt. Das Menue zeigt in eckigen
+Klammern, wie viele Arten gerade zur Wahl stehen.
+
+
+UPDATE
+------
+F1 -> Zeile "Update" -> ENTER prueft, ob es eine neuere Fassung gibt.
+Wird eine gefunden, steht sie in der Zeile; ein zweites ENTER laedt und
+installiert sie. Das Programm startet danach neu.
+
+Auf der Kommandozeile:
+
+    ArenaMapTool.exe --update          nur nachsehen
+    ArenaMapTool.exe --update-jetzt    nachsehen und einspielen
+
+Bezugsquelle ist das GitHub-Repo GermanDudeXX/ArenaMapGenerator. Es ist
+oeffentlich, also braucht niemand einen Zugangsschluessel - jeder, der
+diese .exe hat, kann aktualisieren.
+
+NEUE FASSUNG VEROEFFENTLICHEN (fuer den Entwickler)
+
+    1. za/version.py hochzaehlen
+    2. BAUEN.bat
+    3. gh release create v1.2.3 dist/ArenaMapTool.exe dist/LIESMICH.txt          --repo GermanDudeXX/ArenaMapGenerator --title "ArenaMapTool 1.2.3"
+
+Der Updater vergleicht die Zahl aus version.py mit dem Tag des neuesten
+Releases und nimmt die erste angehaengte .exe.
+
+
+WENN ETWAS NICHT GEHT
+---------------------
+Die .exe kann sich selbst pruefen. In einer Eingabeaufforderung:
+
+    ArenaMapTool.exe --selbsttest C:\Pfad\zum\Pruefordner
+
+Danach steht dort "selbsttest.txt" mit dem Ergebnis.
+
+
+LIZENZ
+------
+Grafik: CraftPix - Free Top Down Roguelike Game Kit (Pixel Art).
+Es gelten die Lizenzbedingungen von CraftPix.

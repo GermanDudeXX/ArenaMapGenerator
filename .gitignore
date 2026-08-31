@@ -1,0 +1,20 @@
+# Bauergebnisse und Zwischenstaende - gehoeren nicht in die Quellverwaltung.
+# Die fertige .exe liegt als Release, nicht im Repo.
+build/
+dist/
+dist_alt/
+__pycache__/
+*.pyc
+
+# Vom Programm erzeugte Ausgaben
+ArenaExport/
+godot_export/_build/
+godot_runtime/.godot/
+godot_runtime/*_out.txt
+godot_runtime/bench*.gd
+godot_runtime/diag*.gd
+
+# Zwischenstaende meiner Pruefungen
+.regression_hash
+.gitter_hash
+.art_hashes
