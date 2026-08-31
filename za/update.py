@@ -174,6 +174,48 @@ def lade(url, ziel, melde=None):
     return ziel
 
 
+# PyInstaller sagt seinem eigenen Kindprozess ueber Umgebungsvariablen,
+# wo die entpackte Laufzeit liegt. Diese Variablen erbt *jeder* Prozess,
+# den wir starten - also auch die cmd.exe des Updates und ueber sie die
+# neu gestartete .exe. Die sucht ihre Laufzeit dann in dem Entpackordner
+# der *alten* Fassung, den die alte Fassung beim Beenden loescht.
+#
+# Ergebnis: "Failed to load Python DLL python313.dll" - und zwar als
+# Wettlauf. Kommt der Neustart, bevor der Ordner geloescht ist, geht es
+# gut; sonst nicht. Genau deshalb lief die Pruefung hier durch und beim
+# Benutzer krachte es trotzdem.
+PYI_VARS = ("_PYI_ARCHIVE_FILE", "_PYI_APPLICATION_HOME_DIR",
+            "_PYI_PARENT_PROCESS_LEVEL", "_PYI_SPLASH_IPC",
+            "_MEIPASS", "_MEIPASS2")
+
+
+def saubere_umgebung():
+    """Die Umgebung ohne die Wegweiser auf unseren Entpackordner."""
+    return {k: v for k, v in os.environ.items()
+            if k not in PYI_VARS and not k.startswith("_PYI_")}
+
+
+def geerbte_pyi_vars():
+    """Was dieser Prozess an solchen Variablen sieht. Fuer die Pruefung."""
+    return {k: v for k, v in os.environ.items()
+            if k in PYI_VARS or k.startswith("_PYI_")}
+
+
+def starte_losgeloest(befehl):
+    """Einen Prozess starten, der uns ueberlebt - mit sauberer Umgebung.
+
+    Ausgabekanaele ausdruecklich abhaengen. Ohne das erbt der neue Prozess
+    die Pipes dieses Prozesses, und wer die .exe von aussen aufruft und
+    ihre Ausgabe mitliest, wartet ewig - die Pipe schliesst nie.
+    """
+    return subprocess.Popen(
+        befehl, env=saubere_umgebung(),
+        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL, close_fds=True,
+        creationflags=(getattr(subprocess, "DETACHED_PROCESS", 0)
+                       | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)))
+
+
 def tausche_und_starte(neu):
     """Die laufende .exe ersetzen.
 
@@ -200,6 +242,9 @@ def tausche_und_starte(neu):
     # scheiterte lautlos.
     zeilen = [
         "@echo off",
+        # Zweiter Riegel gegen dasselbe: selbst wenn diese cmd.exe die
+        # Variablen doch geerbt haette, gibt sie sie nicht weiter.
+    ] + ['set "' + v + '="' for v in PYI_VARS] + [
         "set N=0",
         ":versuch",
         'move /Y "' + neu + '" "' + alt + '" >nul 2>&1',
@@ -209,6 +254,9 @@ def tausche_und_starte(neu):
         "ping -n 2 127.0.0.1 >nul",
         "goto versuch",
         ":fertig",
+        # Kurz Luft lassen, bevor die neue Fassung startet: der alte
+        # Prozess raeumt beim Beenden noch seinen Entpackordner weg.
+        "ping -n 3 127.0.0.1 >nul",
         'start "" "' + alt + '"',
         'del "%~f0"',
         "exit /b 0",
@@ -220,14 +268,5 @@ def tausche_und_starte(neu):
     with open(bat, "w", encoding="ascii", newline="") as fh:
         fh.write("\r\n".join(zeilen) + "\r\n")
 
-    # Ausgabekanaele ausdruecklich abhaengen. Ohne das erbt cmd.exe die
-    # Pipes dieses Prozesses, und wer die .exe von aussen aufruft und ihre
-    # Ausgabe mitliest, wartet ewig - die Pipe schliesst nie, weil das
-    # Stapelskript sie offenhaelt.
-    subprocess.Popen(
-        ["cmd", "/c", bat],
-        stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL, close_fds=True,
-        creationflags=(getattr(subprocess, "DETACHED_PROCESS", 0)
-                       | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)))
+    starte_losgeloest(["cmd", "/c", bat])
     return bat

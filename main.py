@@ -6,6 +6,7 @@
     python main.py --seed 7 --export   nur exportieren, kein Fenster
 """
 import argparse
+import json
 import os
 import sys
 
@@ -260,6 +261,16 @@ def main(argv=None):
                     help="pruefen und, wenn neuer, gleich einspielen")
     ap.add_argument("--update-quelle", default=None,
                     help="andere Adresse fuer die Pruefung (zum Testen)")
+    # Diagnose fuer die Update-Pruefung, absichtlich nicht in der Hilfe:
+    # zeigt, welche PyInstaller-Wegweiser ein Prozess geerbt hat, und
+    # laesst sich ueber cmd.exe eine Stufe weiterreichen. Genau diese
+    # Kette hat die neu gestartete .exe frueher zerlegt.
+    ap.add_argument("--umgebung", action="store_true",
+                    help=argparse.SUPPRESS)
+    ap.add_argument("--umgebung-kette", metavar="DATEI", default=None,
+                    help=argparse.SUPPRESS)
+    ap.add_argument("--umgebung-roh", action="store_true",
+                    help=argparse.SUPPRESS)
     ap.add_argument("--selbsttest", metavar="ORDNER", default=None,
                     help="Alles einmal durchrechnen und schreiben, dann "
                          "beenden - prueft die gepackte .exe")
@@ -280,6 +291,43 @@ def main(argv=None):
 
     if args.update or args.update_jetzt:
         return updaten(args.update_quelle, args.update_jetzt)
+
+    if args.umgebung:
+        from za import update as U
+        print(json.dumps(U.geerbte_pyi_vars()))
+        return 0
+
+    if args.umgebung_kette:
+        from za import update as U
+        ziel = os.path.abspath(args.umgebung_kette)
+        bat = ziel + ".bat"
+        # Derselbe Weg wie beim Update: eine cmd.exe, die uns ueberlebt,
+        # und darin ein `start` der .exe. Nur schreibt sie hier auf, was
+        # angekommen ist, statt eine Karte zu zeigen.
+        with open(bat, "w", encoding="ascii", newline="") as fh:
+            fh.write("\r\n".join([
+                "@echo off",
+                '"' + os.path.abspath(sys.executable) + '" --umgebung > "'
+                + ziel + '"',
+            ]) + "\r\n")
+        if args.umgebung_roh:
+            # Der alte Weg: Popen ohne eigene Umgebung. Steht hier, damit
+            # die Pruefung den Unterschied zeigen kann statt ihn zu
+            # behaupten - ohne Vergleichsfall wuesste niemand, ob der
+            # Test ueberhaupt etwas faengt.
+            # Bis auf die Umgebung genau derselbe Aufruf wie oben -
+            # sonst vergliche die Pruefung zwei Dinge auf einmal.
+            import subprocess
+            subprocess.Popen(
+                ["cmd", "/c", bat],
+                stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL, close_fds=True,
+                creationflags=(getattr(subprocess, "DETACHED_PROCESS", 0)
+                               | getattr(subprocess,
+                                         "CREATE_NEW_PROCESS_GROUP", 0)))
+        else:
+            U.starte_losgeloest(["cmd", "/c", bat])
+        return 0
 
     if args.selbsttest:
         return selbsttest(args.selbsttest)
